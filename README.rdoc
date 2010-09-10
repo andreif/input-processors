@@ -1,10 +1,10 @@
 = Input Processors for Serpent and MCNP/X
 
-This set of Ruby classes is developed to be used for input file conversion between Serpent and MCNP. So far it works only with limited number of Serpent objects, and doesn't parse MCNP inputs at all.
+This set of Ruby classes is dedicated for input file conversion between Serpent and MCNP. So far it works only with limited number of Serpent objects, and doesn't parse MCNP inputs yet.
 
 === System requirements
 
-The classes are written in Ruby 1.9.1, and will not work for Ruby 1.8.x unless some "code cleaning" is done.
+The classes are written in Ruby 1.9.2, and will not work for Ruby 1.8.x unless some code "cleaning" is done.
 
 === Links
 
@@ -14,10 +14,8 @@ Serpent
 * http://nea.fr/tools/abstract/detail/nea-1840
 * http://nea.fr/tools/abstract/detail/nea-1854
 
-MCNP
+MCNP, MCNPX
 * http://mcnp-green.lanl.gov
-
-MCNPX
 * http://mcnpx.lanl.gov
 
 === Copyright and License
