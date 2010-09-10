@@ -36,6 +36,10 @@ class Serpent::Input
     self.to_s
   end
   
+  def self.parse text
+    return self.new.parse text
+  end
+  
   def parse text #file
     #raise "not found" unless File.exists? file
     #raise "cannot read" unless File.readable? file
