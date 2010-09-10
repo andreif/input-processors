@@ -114,6 +114,7 @@ class Serpent::Input::McnpMaker
   end
   
   def get_surface_levels universe, level=0, surface_levels={}
+#p universe.id
     universe.cells.each do |cell|
       cell.surfaces.each_simple_node do |node|
         id = node.surface.id
@@ -124,6 +125,7 @@ class Serpent::Input::McnpMaker
         end
       end
       unless cell.fill.nil?
+#p [cell.fill.class, cell.fill.id, @universes.keys]
         surface_levels = self.get_surface_levels(@universes[cell.fill.id], level+1, surface_levels)
       end
     end
@@ -205,6 +207,7 @@ class Serpent::Input::McnpMaker
   
   def convert_nest nest
     surf = nil
+#p nest.id
     nest.layers.each do |layer|
       
       @mcnp_input.add(:cell) do |c|
@@ -212,6 +215,7 @@ class Serpent::Input::McnpMaker
         c.universe = @mcnp_input.get( universe: nest.id ) do |u|
           u.cells.push c
         end
+        @universes[nest.id] ||= c.universe
         
         c.comments.push 'nest %d' % nest.id
         
@@ -223,6 +227,7 @@ class Serpent::Input::McnpMaker
         elsif uni = layer[:universe]
           c.material = nil
           c.fill = @mcnp_input.get( universe: uni.id )
+          @universes[uni.id] ||= c.fill
         end
         
         # previous surface
@@ -279,6 +284,7 @@ class Serpent::Input::McnpMaker
       #   #c.temperature = ?
       # end
     end
+#p @mcnp_input.universes.keys
   end
   
   
@@ -295,8 +301,9 @@ class Serpent::Input::McnpMaker
     unless @materials.has_key? (id = serpent_material.id)
       @materials[ serpent_material.id ] = (id =~ /^(outside|void)$/) ? nil : @mcnp_input.add(:material) do |m|
         m.density = serpent_material.density
-        m.composition = serpent_material.composition
+        m.composition = serpent_material.composition.dup
         m.comments.push serpent_material.id
+        m.name = serpent_material.id
       end
     end
   end

@@ -7,7 +7,7 @@ class Mcnp::Input
   NX = '' #' &'
   CN = NX + NL + TB
   
-  def to_s
+  def to_s *args
     importances = []
     # title
     r = @parameters['title'] + NL
@@ -26,26 +26,44 @@ class Mcnp::Input
     end
     r << NL
     # materials etc.
-    @materials.each_value do |m|
-      r += m.to_s
+    unless args.include? :skip_materials
+      @materials.each_value do |m|
+        r += m.to_s
+      end
     end
-    r += 'imp:n ' + importances.join(' ') + NL
+    # params
+    r += 'imp:n ' + self.find_repeated(importances) + NL
     r += 'mode n' + NL
-    @parameters.each_pair do |k,v|
-      r += k + ' ' + v.join(' ') + NL unless k == 'title'
+    unless args.include? :skip_materials
+      @parameters.each_pair do |k,v|
+        r += k + ' ' + v.join(' ') + NL unless k == 'title'
+      end
     end
-    # r = r.split("\n").collect do |line|
-    #   if line =~ /^(.{77,}\S+)\s*$/
-    #     line.gsub! /^(.{1,77})(\s+|\Z)/, "\\1" + CN
-    #     line.gsub! /\s+$/, ''
-    #   end
-    #   line
-    # end .join("\n")
     r = textwrap(r,74,CN)
-    #r = r.gsub(/\n(.{1,77})(\s+|\Z)/, "\n\\1" + CN)
-    #r = r.gsub(/(.{1,77})( +|$\n?)|(.{1,77})/, "\\1\\3 &\n     ")
     return r
   end
+  
+  
+  def find_repeated ary
+    result = []
+    ary.each do |curr|
+      if not result.empty? and curr == result.last[:item]
+        result.last[:repeated] += 1
+      else
+        result << {item: curr, repeated: 0}
+      end
+    end
+    result = result.collect do |i|
+      item,repeated = i.values
+      if repeated.zero?
+        item
+      else
+        [item, "%dr" % repeated]
+      end
+    end
+    return result.flatten.join(' ')
+  end
+  
   
   def textwrap text, width, indent="\n"
     return text.split("\n").collect do |line|
@@ -63,7 +81,7 @@ end
 
 
 
-class Mcnp::Input::Cell# < Mcnp::Input::Card
+class Mcnp::Input::Cell
 
   def print_surf_set node, brackets=false
     case node.type
@@ -76,20 +94,6 @@ class Mcnp::Input::Cell# < Mcnp::Input::Card
         r = node.nodes.collect {|n|self.print_surf_set(n,true)}.join(' : ')
         return brackets && node.nodes.count > 1 ? '(%s)'% r : r
     end
-    # intersection = !(union = group_dir == :outside)
-    # r = []
-    # ss.each do |s|
-    #   dir,s = s.flatten
-    #   outside = !(inside = dir == :inside)
-    #   case s.class.to_s
-    #     when 'Array'
-    #       dir = {inside: :outside, outside: :inside}[dir] if union
-    #       r << '(%s)' % print_surf_set(s, dir)
-    #   else
-    #       r << '%s%s' % [(inside and intersection) || (outside and union) ? '-' : nil, s.id]
-    #   end
-    # end
-    # return r.join(union ? ' : ' : ' ')
   end
   
   def to_s
@@ -102,11 +106,9 @@ class Mcnp::Input::Cell# < Mcnp::Input::Card
     r += NX
     r += " $ %s " % @comments.join('; ') unless @comments.empty?
     r += NL + TB
-    #@surfaces.each_simple_node do |node|
-    #@surfaces.nodes.each do |node|
-      r += self.print_surf_set @surfaces
-    #end
+    r += self.print_surf_set @surfaces
     r += CN + 'u=%s ' % @universe.id unless @universe.id == '0'
+    r += ' tmp=%s ' % @temperature unless @temperature.nil?
     if @fill
       r += CN if @universe.id == '0'
       case @fill.class.to_s
@@ -117,7 +119,6 @@ class Mcnp::Input::Cell# < Mcnp::Input::Card
       end
     end
     r += ' TRCL=(%s) ' % @coordinates_transformation.collect{|n|n.to_s}.join(' ') if @coordinates_transformation
-    # %s %s $ %s\n, , , s.parameters.join(' '), )#c.universe.id
     r += NL
     return r
   end
@@ -127,9 +128,11 @@ end
 class Mcnp::Input::Material
   def to_s
     r = "m%d $ density %s g/ccm; %s\n" % [@id, @density, @comments.join('; ')]
-    @composition.each do |pair|
-      iso, fr = pair
-      r += TB + iso + ' ' + fr + NL
+    unless @composition.nil?
+      @composition.each do |pair|
+        iso, fr = pair
+        r += TB + iso + ' ' + fr + NL
+      end
     end
     return r
   end

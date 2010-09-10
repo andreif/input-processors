@@ -42,9 +42,7 @@ class Serpent
     class Material < CodeInput::Material ; end
     class Lattice  < CodeInput::Lattice  ; end
     class Universe < CodeInput::Universe ; end
-    class Parser
-      class WordScanner; end
-    end
+    class WordScanner; end
     class McnpMaker; end
   end
 end
@@ -85,12 +83,16 @@ class CodeInput::Material
   attr_accessor :density, :composition
 end
 
+  class Mcnp::Input::Material
+    attr_accessor :name, :temperature
+  end
+
 class CodeInput::Cell
   attr_accessor :universe, :surfaces, :material, :fill
 end
 
     class Mcnp::Input::Cell
-      attr_accessor :importance, :coordinates_transformation
+      attr_accessor :importance, :coordinates_transformation, :temperature, :density
     end
 
 class CodeInput::Lattice
@@ -105,11 +107,8 @@ class Serpent::Input::Nest
   attr_accessor :layers, :surface_type
 end
 
-class Serpent::Input::Parser
-  attr_reader :input
-end
 
-class Serpent::Input::Parser::WordScanner
+class Serpent::Input::WordScanner
   attr_reader :words
 end
 
@@ -166,7 +165,7 @@ end
 
 
 
-
+# load classes
 require_many %w[
   SurfaceLogic
   McnpInput
@@ -183,16 +182,14 @@ require_many %w[
 # -------------------------------------
 # tests
 
-
-
 #Kernel.system 'cd /Users/andrei/Workspace/Delete/Work/Inputs/'
 #Kernel.system "erb  pad_test.serpent.erb  >  pad_test.serpent"
 
-path = '/Users/andrei/Workspace/Delete/Work/Inputs/serpent2mcnp/'
-# Kernel.system "erb #{path}pad_test.serpent.erb > #{path}pad_test.serpent"
-File.new("#{path}pad_test.mcnp",'w+').write Serpent::Input.new("#{path}pad_test.serpent").to_mcnp.to_s
-File.new("#{path}hex_test.mcnp",'w+').write Serpent::Input.new("#{path}hex_test.serpent").to_mcnp.to_s
-File.new("#{path}lat_test.mcnp",'w+').write Serpent::Input.new("#{path}lat_test.serpent").to_mcnp.to_s
+# path = '/Users/andrei/Workspace/Delete/Work/Inputs/serpent2mcnp/'
+# # Kernel.system "erb #{path}pad_test.serpent.erb > #{path}pad_test.serpent"
+# File.new("#{path}pad_test.mcnp",'w+').write Serpent::Input.new("#{path}pad_test.serpent").to_mcnp.to_s
+# File.new("#{path}hex_test.mcnp",'w+').write Serpent::Input.new("#{path}hex_test.serpent").to_mcnp.to_s
+# File.new("#{path}lat_test.mcnp",'w+').write Serpent::Input.new("#{path}lat_test.serpent").to_mcnp.to_s
 # File.new("#{path}pad_test.mcnp",'w+').write Serpent::Input.new("#{path}pad_test.serpent").to_mcnp.to_s
 
 

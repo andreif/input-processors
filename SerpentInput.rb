@@ -3,13 +3,12 @@
 
 class Serpent::Input
   
-  def initialize path=nil
+  def initialize #path=nil
     @nests, @surfaces, @materials, @universes, @lattices, @cells, @parameters, @comments = Array.new(10) {{}}
-    @comments[:file] = path
+    #@comments[:file] = path
     #if path_or_text =~ /\n/
-    Parser.new(path, self)
+    #Parser.new(path, self)
   end
-  
   
   def get card
     type, id = card.keys.first, card.values.first
@@ -37,6 +36,79 @@ class Serpent::Input
     self.to_s
   end
   
+  def parse text #file
+    #raise "not found" unless File.exists? file
+    #raise "cannot read" unless File.readable? file
+    #raise "found # symbol" if file =~ /\#/
+    #text = IO.read(file)
+    
+    words = WordScanner.new(text).parse
+    
+    cards = {header: [[]]}
+    current_keyword = nil # must be defined outside block
+    
+    words.each do |word_info|
+      fr,to = word_info.values
+      word = text[fr..to]
+      next if word.empty?
+      if self.is_keyword? word
+        leading_comments = []
+        if current_keyword
+          until cards[ current_keyword ].last.empty?
+            break unless cards[ current_keyword ].last.last =~ /^([\#\%]|\/\*)/
+            leading_comments << cards[ current_keyword ].last.pop
+          end
+        end
+        current_keyword = word.downcase.to_sym
+        cards[ current_keyword ] ||= []
+        cards[ current_keyword ].push []#leading_comments
+      else
+        cards[ current_keyword || :header ].last.push word unless word =~ /^([\#\%]|\/\*)/
+      end
+    end
+    
+    
+    {set: 2, mat: 4, surf: 3, cell: 4, nest:2, pin: 2, lat: 8}.each_pair do |key, min|
+      next if not cards.has_key?(key) or cards[key].empty? # raise "no materials!"
+      
+      cards[key].each do |card_words|
+        raise "bad definition of #{key} " if card_words.length < min
+        id = card_words.shift
+        case key
+          when :set then @parameters[id] = card_words.length > 1  ? card_words : card_words.first
+          when :pin then self.get(nest: id).parse( ['cyl'] + card_words )
+        else
+          self.get(key => id).parse  card_words
+        end
+      end
+    end
+    return self
+  end
+  
+  
+  def is_keyword? word
+    %w[ cell det include lat mat pin nest particle disp pbed plot set surf therm trans mesh dep ene ].include? word.downcase
+  end
+  
+# cell  cell definition
+# det  detector definition
+# include  read a new input file
+# lat  lattice definition
+# mat  material definition
+# pin  pin definition
+# nest  nest definition
+# particle  particle definition
+# disp  implicit HTGR particle fuel model
+# pbed  explicit HTGR particle / pebble bed fuel model
+# plot  geometry plotter
+# set   misc. parameter definition
+# surf  surface definition
+# therm  thermal scattering data definition
+# trans  universe transformation
+# mesh  thermal flux and fission rate mesh plotter
+# dep  irradiation history
+  
+  
 end
 
 
@@ -57,6 +129,10 @@ class Serpent::Input::Nest
         @layers.push( material: @input.get(m: mat), surface_parameters: words.shift(n_params))
       end
     end
+# p @id
+# p @layers.each.collect { |l|
+#   [l.values.first.class, l[:surface_parameters]]
+# }
     # words.each_slice(2) do |pair|
     #   mat,rad = pair
     #   # fill 10  1.0
@@ -134,88 +210,3 @@ class Serpent::Input::Cell
   end
 end
 
-
-
-
-class Serpent::Input::Parser
-  
-  def initialize file, input=nil
-    @input = input || Input.new
-    self.parse file
-  end
-  
-  
-  def parse file
-    raise "not found" unless File.exists? file
-    raise "cannot read" unless File.readable? file
-    #raise "found # symbol" if file =~ /\#/
-    
-    text = IO.read(file)
-    
-    words = Parser::WordScanner.new(text).parse
-    
-    cards = {header: [[]]}
-    current_keyword = nil # must be defined outside block
-    
-    words.each do |word_info|
-      fr,to = word_info.values
-      word = text[fr..to]
-      next if word.empty?
-      if self.is_keyword? word
-        leading_comments = []
-        if current_keyword
-          until cards[ current_keyword ].last.empty?
-            break unless cards[ current_keyword ].last.last =~ /^([\#\%]|\/\*)/
-            leading_comments << cards[ current_keyword ].last.pop
-          end
-        end
-        current_keyword = word.downcase.to_sym
-        cards[ current_keyword ] ||= []
-        cards[ current_keyword ].push []#leading_comments
-      else
-        cards[ current_keyword || :header ].last.push word unless word =~ /^([\#\%]|\/\*)/
-      end
-    end
-    
-    
-    {set: 2, mat: 4, surf: 3, cell: 4, nest:2, pin: 2, lat: 8}.each_pair do |key, min|
-      next if not cards.has_key?(key) or cards[key].empty? # raise "no materials!"
-      
-      cards[key].each do |card_words|
-        raise "bad definition of #{key} " if card_words.length < min
-        id = card_words.shift
-        case key
-          when :set then @input.parameters[id] = card_words.length > 1  ? card_words : card_words.first
-          when :pin then @input.get(nest: id).parse( ['cyl'] + card_words )
-        else
-          @input.get(key => id).parse  card_words
-        end
-      end
-    end
-    
-  end
-  
-  
-  def is_keyword? word
-    %w[ cell det include lat mat pin nest particle disp pbed plot set surf therm trans mesh dep ene ].include? word.downcase
-  end
-  
-# cell  cell definition
-# det  detector definition
-# include  read a new input file
-# lat  lattice definition
-# mat  material definition
-# pin  pin definition
-# nest  nest definition
-# particle  particle definition
-# disp  implicit HTGR particle fuel model
-# pbed  explicit HTGR particle / pebble bed fuel model
-# plot  geometry plotter
-# set   misc. parameter definition
-# surf  surface definition
-# therm  thermal scattering data definition
-# trans  universe transformation
-# mesh  thermal flux and fission rate mesh plotter
-# dep  irradiation history
-  
-end

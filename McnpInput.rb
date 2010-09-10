@@ -75,20 +75,6 @@ end
 
 
 
-# 
-# # default settings to inherit
-# class Mcnp::Input::Card
-#   attr_accessor :id, :comments
-#   def initialize input, id
-#     @input, @id = input, id
-#     @comments = []
-#     yield self if block_given?
-#   end
-#   def parse words; end
-#   def to_s; end
-#   def validate; end
-# end
-
 
 
 
@@ -105,88 +91,7 @@ end
 
 
 
-# class Mcnp::Input::Cell# < Mcnp::Input::Card
-#   # attr_accessor :universe, :surfaces, :material, :fill, :importance
-#   def initialize *args
-#     @importance = 1
-#     @fill = nil
-#     super *args
-#   end
-#   
-#   # def print_surf_set ss, group_dir = :inside
-#   #   intersection = !(union = group_dir == :outside)
-#   #   r = []
-#   #   ss.each do |s|
-#   #     dir,s = s.flatten
-#   #     outside = !(inside = dir == :inside)
-#   #     case s.class.to_s
-#   #       when 'Array'
-#   #         dir = {inside: :outside, outside: :inside}[dir] if union
-#   #         r << '(%s)' % print_surf_set(s, dir)
-#   #     else
-#   #         r << '%s%s' % [(inside and intersection) || (outside and union) ? '-' : nil, s.id]
-#   #     end
-#   #   end
-#   #   return r.join(union ? ' : ' : ' ')
-#   # end
-#   # 
-#   # def print
-#   #   r  = '%d ' % @id
-#   #   if @material
-#   #     r += '%s %s ' % [@material.id, @material.density]
-#   #   else
-#   #     r += '0 '
-#   #   end
-#   #   r += NX
-#   #   r += " $ %s " % @comments.join('; ') unless @comments.empty?
-#   #   r += NL + TB
-#   #   r += self.print_surf_set( @surfaces)
-#   #   r += CN + 'u=%s ' % @universe.id unless @universe.id == '0'
-#   #   if @fill
-#   #     r += CN if @universe.id == '0'
-#   #     case @fill.class.to_s
-#   #       when /Lattice/
-#   #         r += @fill.print
-#   #     else
-#   #       r += 'fill=%s ' % @fill.id
-#   #     end
-#   #   end
-#   #   # %s %s $ %s\n, , , s.parameters.join(' '), )#c.universe.id
-#   #   r += NL
-#   #   return r
-#   # end
-# end
 
-
-
-
-
-
-# class Mcnp::Input::Universe# < Mcnp::Input::Card
-#   # attr_accessor :cells
-#   def initialize *args
-#     @cells = []
-#     super *args
-#   end
-# end
-
-
-# class Mcnp::Input::Lattice# < Mcnp::Input::Card
-#   # attr_accessor :elements, :dimensions, :type
-#   def initialize *args
-#     @elements = []
-#     super *args
-#   end
-#   # def print
-#   #   r = "lat=%d " % [  {sqare: 1, hexxc: 2, hexyc: 2}[@type] || raise  ]
-#   #   r += "fill=-%1$d:%1$d -%2$d:%2$d -%3$d:%3$d " % @dimensions.collect{|d|d/2}
-#   #   x,y,z = @dimensions
-#   #   r += x.times.collect do |i|
-#   #     CN + @elements[i*y,y].collect{|e|e.id}.join(' ')
-#   #   end.join
-#   #   return r
-#   # end
-# end
 
 
 

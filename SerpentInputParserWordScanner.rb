@@ -1,4 +1,4 @@
-class Serpent::Input::Parser::WordScanner
+class Serpent::Input::WordScanner
   attr_reader :words
 
   def initialize text
