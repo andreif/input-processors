@@ -8,20 +8,20 @@ The classes are written in Ruby 1.9.2, and will not work for Ruby 1.8.x unless s
 
 === Example
 
-    # read Serpent input
-    serpent_text  = IO.read 'input.serpent'
+  # read Serpent input
+  serpent_text  = IO.read 'input.serpent'
 
-    # parse input text and create input object
-    serpent_input = Serpent::Input.parse serpent_text
+  # parse input text and create input object
+  serpent_input = Serpent::Input.parse serpent_text
 
-    # convert Serpent input object to MCNP input object
-    mcnp_input = serpent_input.to_mcnp
+  # convert Serpent input object to MCNP input object
+  mcnp_input = serpent_input.to_mcnp
 
-    # print MCNP input to string
-    mcnp_text = mcnp_input.to_s
+  # print MCNP input to string
+  mcnp_text = mcnp_input.to_s
 
-    # save result to file
-    File.new('input.mcnp','w+').write mcnp_text
+  # save result to file
+  File.new('input.mcnp','w+').write mcnp_text
 
 === Links
 
