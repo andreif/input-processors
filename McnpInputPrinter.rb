@@ -9,6 +9,7 @@ class Mcnp::Input
   
   def to_s *args
     importances = []
+    cell_materials = {}
     # title
     r = @parameters['title'] + NL
     # comments
@@ -16,6 +17,10 @@ class Mcnp::Input
     # cells
     @cells.each_value do |c|
       r += c.to_s
+      unless c.material.nil?
+        cell_materials[ c.material.name ] ||= []
+        cell_materials[ c.material.name ].push c.id
+      end
       importances.push c.importance
     end
     # separator
@@ -25,6 +30,9 @@ class Mcnp::Input
       r += s.to_s
     end
     r << NL
+    cell_materials.each_pair do |name,cells|
+      r += "c %s = %s\n" % [name, cells.join(' ')]
+    end
     # materials etc.
     unless args.include? :skip_materials
       @materials.each_value do |m|
@@ -67,7 +75,11 @@ class Mcnp::Input
   
   def textwrap text, width, indent="\n"
     return text.split("\n").collect do |line|
-      line.scan( /(.{1,#{width}})(\s+|$)/ ).collect{|a|a[0]}.join  indent
+      if line =~ /^c /i
+        line
+      else
+        line.scan( /(.{1,#{width}})(\s+|$)/ ).collect{|a|a[0]}.join  indent
+      end
     end.join("\n")
   end
 end

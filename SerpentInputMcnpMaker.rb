@@ -126,7 +126,11 @@ class Serpent::Input::McnpMaker
       end
       unless cell.fill.nil?
 #p [cell.fill.class, cell.fill.id, @universes.keys]
-        surface_levels = self.get_surface_levels(@universes[cell.fill.id], level+1, surface_levels)
+        if cell.fill.class.to_s =~ /universe/i
+          surface_levels = self.get_surface_levels(@universes[cell.fill.id], level+1, surface_levels)
+        else
+          # lattice!!!
+        end
       end
     end
     return surface_levels
@@ -136,7 +140,9 @@ class Serpent::Input::McnpMaker
   def convert_lattice serpent_lattice
     id = serpent_lattice.id
     @mcnp_input.add(cell:900..999) do |c|
-      c.universe = self.convert_universe(id)
+      c.universe = self.convert_universe(id) do |u|
+        u.cells.push c
+      end
       c.fill = @mcnp_input.add(:lattice) do |lat|
         lat.type = serpent_lattice.type
         lat.dimensions = serpent_lattice.dimensions + [0]
@@ -301,6 +307,7 @@ class Serpent::Input::McnpMaker
     unless @materials.has_key? (id = serpent_material.id)
       @materials[ serpent_material.id ] = (id =~ /^(outside|void)$/) ? nil : @mcnp_input.add(:material) do |m|
         m.density = serpent_material.density
+        raise "Missing composition for " + serpent_material.id if serpent_material.composition.nil?
         m.composition = serpent_material.composition.dup
         m.comments.push serpent_material.id
         m.name = serpent_material.id
@@ -396,7 +403,16 @@ class Serpent::Input::McnpMaker
           end
           
         when :cyl
-          s = SurfaceLogic::Negative.new self.surf_cyl( id, *serpent_surface.parameters)
+          x,y,r,z1,z2 = serpent_surface.parameters
+          if serpent_surface.parameters.count > 3
+            s = SurfaceLogic::Intersection.new do |i|
+              i.add_node  inside:  self.surf_cyl( id, x,y,r)
+              i.add_node  above:   @mcnp_input.add(:surface).parse('pz',z1)
+              i.add_node  below:   @mcnp_input.add(:surface).parse('pz',z2)
+            end
+          else
+            s = SurfaceLogic::Negative.new self.surf_cyl( id, x,y,r)
+          end
           
         when :sph
           x,y,z,r = serpent_surface.parameters

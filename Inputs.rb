@@ -1,4 +1,4 @@
-require '/Users/andrei/Workspace/Environment/Programming/Library/Ruby/require_many'
+# require '/Users/andrei/Workspace/Environment/Programming/Library/Ruby/library'
 
 # allow quick class reference
 require 'searchable_namespaces'

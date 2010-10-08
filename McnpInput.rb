@@ -69,6 +69,105 @@ class Mcnp::Input
     raise
   end
   
+  
+  def routes_to name, u = '0', path = []
+    routes = []
+    @universes[u].cells.each do |c|
+      c_path = path + [c.id]
+#p c_path
+      if c.material.nil?
+        if c.fill.nil?
+          # void
+        elsif c.fill.class.to_s =~ /universe/i
+          routes += self.routes_to( name, c.fill.id, c_path)
+        else
+          dx,dy = c.fill.dimensions
+          c.fill.elements.collect {|el| el.id} .each_with_index do |id,i|
+            lat = '[%3d %3d 0]' % [i%dx - dx/2, i/dx - dy/2]
+            routes += self.routes_to( name, id, path + [c.id + lat] )
+          end
+        end
+      elsif c.material.name == name.to_s
+        routes << c_path
+      end
+    end
+    i = 0; routes = routes.collect { |r| "     (%s) $ %d " % [r.reverse.join(' < '), i+=1] } if path.empty?
+    return routes
+  end
+  
+  
+  
+  def generate_cell_tree u='0', level=0
+    children = []
+    r = ''
+    @universes[u].cells.each do |c|
+      r << "c %sc%s:u%s = " % [' '*level*2, c.id, u]
+      if c.material.nil?
+        if c.fill.nil?
+          r << "void"
+        elsif c.fill.class.to_s =~ /universe/i
+          r << 'u' + c.fill.id
+          children << c.fill.id
+        else
+          r << "[%s]" % (
+            c.fill.elements.collect {|el| el.id} .uniq.collect do |id|
+              children << id
+              id
+            end.join(', ')
+          )
+        end
+      else
+        r << c.material.name
+      end
+      r << "\n"
+    end
+    children.each do |id|
+      r << self.generate_cell_tree( id, level+1)
+    end
+    return r
+  end
+  
+  
+  
+  def generate_universe_tree u='0', level=0
+    # p [@universes.keys, @universes[u].cells.count]
+    r = "c %su%s = " % [' '*level*2, u]
+    children = []
+    @universes[u].cells.each do |c|
+      r << "c%s:" % c.id
+      if c.material.nil?
+        if c.fill.nil?
+          r << "void"
+        elsif c.fill.class.to_s =~ /universe/i
+          r << 'u' + c.fill.id
+          children << c.fill.id
+        else
+          r << "[%s]" % (
+            c.fill.elements.collect {|el| el.id} .uniq.collect do |id|
+              children << id
+              id
+            end.join(', ')
+          )
+        end
+      else
+        r << c.material.name
+      end
+      r << ', '
+    end
+    #p @universes[u].class
+    # if @universes[u].class.to_s =~ /lattice/i
+    #   print "[%s]" % @universes.elements.collect{|el|el.id}.uniq.collect do |id|
+    #     children << id
+    #     id
+    #   end.join(', ')
+    # end
+    r << "\n"
+    children.each do |id|
+      r << self.generate_universe_tree( id, level+1)
+    end
+    return r
+  end
+  
 end
 
 
