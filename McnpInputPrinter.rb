@@ -9,30 +9,25 @@ class Mcnp::Input
   
   def to_s *args
     importances = []
-    cell_materials = {}
+    requested = self.requested_ids
     # title
     r = @parameters['title'] + NL
     # comments
-    r += 'c ' + @comments.values.join('; ') + NL
+    r += @comments.values.collect{ |c| 'c ' + c.gsub(/\n([^c])/,"\nc \\1") }.join(NL).strip + NL
     # cells
     @cells.each_value do |c|
-      r += c.to_s
-      unless c.material.nil?
-        cell_materials[ c.material.name ] ||= []
-        cell_materials[ c.material.name ].push c.id
+      if requested[:cells].include? c.id
+        r += c.to_s
+        importances.push c.importance
       end
-      importances.push c.importance
     end
     # separator
     r << NL
     # surfaces
     @surfaces.each_value do |s|
-      r += s.to_s
+      r += s.to_s if requested[:surfaces].include? s.id
     end
     r << NL
-    cell_materials.each_pair do |name,cells|
-      r += "c %s = %s\n" % [name, cells.join(' ')]
-    end
     # materials etc.
     unless args.include? :skip_materials
       @materials.each_value do |m|

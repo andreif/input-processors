@@ -87,6 +87,14 @@ class CodeInput::SurfaceLogic::TreeNode
   end
   
   
+  def surface_ids
+    ids = []
+    ids << @surface.id unless @surface.nil?
+    @nodes.each do |node|
+      ids += node.surface_ids
+    end
+    return ids.uniq
+  end
   
   
   # def print

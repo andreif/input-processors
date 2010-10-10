@@ -122,6 +122,7 @@ end
 class CodeInput
   def initialize
     @nests, @surfaces, @materials, @universes, @lattices, @cells, @parameters, @comments = Array.new(10) {{}}
+    #@comments = []
   end
 end
 
